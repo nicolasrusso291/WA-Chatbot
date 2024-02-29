@@ -16,3 +16,9 @@ services:
       - VERIFY_TOKEN=${VERIFY_TOKEN}
       - NUMBER_ID=${NUMBER_ID}
       - FLASK_KEY=${FLASK_KEY}
+    networks:
+      inverseproxy_shared:
+
+networks:
+  inverseproxy_shared:
+    external: true
