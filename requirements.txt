@@ -3,3 +3,4 @@ flask-caching
 google-generativeai
 ipython
 gunicorn
+python-dotenv

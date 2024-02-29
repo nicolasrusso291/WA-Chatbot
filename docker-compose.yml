@@ -11,8 +11,8 @@ services:
     environment:
       - FLASK_ENV=development
       - FLASK_APP=script.py
-      - GOOGLE_API_KEY=asd
-      - WA_TOKEN=
-      - VERIFY_TOKEN=
-      - NUMBER_ID=
-      - FLASK_KEY=
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - WA_TOKEN=${WA_TOKEN}
+      - VERIFY_TOKEN=${VERIFY_TOKEN}
+      - NUMBER_ID=${NUMBER_ID}
+      - FLASK_KEY=${FLASK_KEY}
