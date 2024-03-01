@@ -35,13 +35,18 @@ with app.app_context():
     # CREDENTIALS = service_account.Credentials. from_service_account_file('google_key.json')
 
     # Whatsapp creds
-    wa_token = os.getenv("WA_TOKEN")
+    WHATSAPP_TOKEN = os.getenv("WA_TOKEN")
     verify_token = os.getenv("VERIFY_TOKEN")
     number_id = os.getenv("NUMBER_ID")
 
+    print(API_KEY, file=sys.stdout)
+    print(WHATSAPP_TOKEN, file=sys.stdout)
+    print(verify_token, file=sys.stdout)
+    print(number_id, file=sys.stdout)
+    
     WHATSAPP_URL = f"https://graph.facebook.com/v18.0/{number_id}/messages"
-    WHATSAPP_TOKEN = 'Bearer Access-Token-From_Meta-Development-Portal'
-
+    print(WHATSAPP_URL, file=sys.stdout)
+    
     model = "gemini-pro"
 
     with open('generation_config.json', "r") as f:
