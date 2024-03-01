@@ -39,13 +39,7 @@ with app.app_context():
     verify_token = os.getenv("VERIFY_TOKEN")
     number_id = os.getenv("NUMBER_ID")
 
-    print(API_KEY, file=sys.stdout)
-    print(WHATSAPP_TOKEN, file=sys.stdout)
-    print(verify_token, file=sys.stdout)
-    print(number_id, file=sys.stdout)
-    
     WHATSAPP_URL = f"https://graph.facebook.com/v18.0/{number_id}/messages"
-    print(WHATSAPP_URL, file=sys.stdout)
     
     model = "gemini-pro"
 
@@ -62,6 +56,24 @@ with app.app_context():
     genai.configure(api_key=API_KEY)
     gemini = genai.GenerativeModel(model_name=model, generation_config=generation_config, safety_settings=safety_settings)
 
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return redirect(url_for('index'))
+
+
+@app.route("/")
+def index():
+    # Si el usuario no tiene una sesión, se crea una nueva
+    if "user_id" not in session:
+        session["user_id"] = str(uuid4())
+
+    chatbot[session["user_id"]] = gemini.start_chat(history=contents)
+
+    # Redirigir al usuario a la página principal
+    # return redirect(url_for("whatsAppWebhook"))
+    return "<h1 style='color:blue'>Quarev Whatsapp Chatbot</h1>"
+    
 
 def sendWhastAppMessage(phoneNumber, message):
     headers = {"Authorization": WHATSAPP_TOKEN}
@@ -100,27 +112,10 @@ def handleWhatsAppMessage(fromId, text):
     sendWhastAppMessage(fromId, answer)
 
 
-@app.errorhandler(404)
-def page_not_found(e):
-    return redirect(url_for('index'))
-
-
-@app.route("/")
-def index():
-    # Si el usuario no tiene una sesión, se crea una nueva
-    if "user_id" not in session:
-        session["user_id"] = str(uuid4())
-
-    chatbot[session["user_id"]] = gemini.start_chat(history=contents)
-
-    # Redirigir al usuario a la página principal
-    return redirect(url_for("whatsAppWebhook"))
-
-
 @app.route('/123456', methods=['GET', 'POST'])
 def whatsAppWebhook():
     if request.method == 'GET':
-        VERIFY_TOKEN = 'QUAREV'
+        VERIFY_TOKEN = verify_token
         mode = request.args.get('hub.mode')
         token = request.args.get('hub.verify_token')
         challenge = request.args.get('hub.challenge')
