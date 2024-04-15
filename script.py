@@ -88,6 +88,8 @@ def sendWhastAppMessage(phoneNumber, message):
             }
     )
     requests.request("POST", WHATSAPP_URL, headers=headers, data=payload)
+    print(headers, file=sys.stdout)
+    print(payload, file=sys.stdout)
     print("MESSAGE SENT")    
 
 
@@ -124,6 +126,7 @@ def whatsAppWebhook():
         challenge = request.args.get('hub.challenge')
 
         if mode == 'subscribe' and token == VERIFY_TOKEN:
+            print("GET DATA OK", file=sys.stdout)
             return challenge, 200
         else:
             return 'error', 403
