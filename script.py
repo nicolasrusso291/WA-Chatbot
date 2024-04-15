@@ -127,6 +127,7 @@ def whatsAppWebhook():
 
     if request.method == 'POST':
         data = request.json
+        print(data4, file=sys.stdout)
         if 'object' in data and 'entry' in data:
             if data['object'] == 'whatsapp_business_account':
                 for entry in data['entry']:
