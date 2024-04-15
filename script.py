@@ -126,7 +126,7 @@ def whatsAppWebhook():
             return 'error', 403
 
     if request.method == 'POST':
-        data = request.json
+        data = request.get_json()
         print(data, file=sys.stdout)
         if 'object' in data and 'entry' in data:
             if data['object'] == 'whatsapp_business_account':
