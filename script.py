@@ -131,27 +131,19 @@ def whatsAppWebhook():
         if (
             request_data["entry"][0]["changes"][0]["value"].get("messages")
         ) is not None:
-            name = request_data["entry"][0]["changes"][0]["value"]["contacts"][0][
-                "profile"
-            ]["name"]
+            name = request_data["entry"][0]["changes"][0]["value"]["contacts"][0]["profile"]["name"]
             if (
-                request_data["entry"][0]["changes"][0]["value"]["messages"][0].get(
-                    "text"
-                )
+                request_data["entry"][0]["changes"][0]["value"]["messages"][0].get("text")
             ) is not None:
-                message = request_data["entry"][0]["changes"][0]["value"]["messages"][
-                    0
-                ]["text"]["body"]
-                user_phone_number = request_data["entry"][0]["changes"][0]["value"][
-                    "contacts"
-                ][0]["wa_id"]
-                user_message_processor(message, user_phone_number, name)
+                message = request_data["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
+                user_phone_number = request_data["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
+                sendWhastAppMessage(fromId, f"We have received: {text}")
+                executor.submit(handleWhatsAppMessage, fromId, text)
+                # user_message_processor(message, user_phone_number, name)
             else:
                 # checking that there is data in a flow's response object before processing it
                 if (
-                    request_data["entry"][0]["changes"][0]["value"]["messages"][0][
-                        "interactive"
-                    ]["nfm_reply"]["response_json"]
+                    request_data["entry"][0]["changes"][0]["value"]["messages"][0]["interactive"]["nfm_reply"]["response_json"]
                 ) is not None:
                     flow_reply_processor(request)
 
