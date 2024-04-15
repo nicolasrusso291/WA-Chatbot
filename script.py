@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, session
+from flask import Flask, request, redirect, url_for, session, make_response
 from flask_caching import Cache
 import os
 import sys
@@ -126,8 +126,37 @@ def whatsAppWebhook():
             return 'error', 403
 
     if request.method == 'POST':
-        data = request.get_json()
-        print(data, file=sys.stdout)
+        request_data = request.get_json()
+        print(request_data, file=sys.stdout)
+        if (
+            request_data["entry"][0]["changes"][0]["value"].get("messages")
+        ) is not None:
+            name = request_data["entry"][0]["changes"][0]["value"]["contacts"][0][
+                "profile"
+            ]["name"]
+            if (
+                request_data["entry"][0]["changes"][0]["value"]["messages"][0].get(
+                    "text"
+                )
+            ) is not None:
+                message = request_data["entry"][0]["changes"][0]["value"]["messages"][
+                    0
+                ]["text"]["body"]
+                user_phone_number = request_data["entry"][0]["changes"][0]["value"][
+                    "contacts"
+                ][0]["wa_id"]
+                user_message_processor(message, user_phone_number, name)
+            else:
+                # checking that there is data in a flow's response object before processing it
+                if (
+                    request_data["entry"][0]["changes"][0]["value"]["messages"][0][
+                        "interactive"
+                    ]["nfm_reply"]["response_json"]
+                ) is not None:
+                    flow_reply_processor(request)
+
+        return make_response('success', 200)
+        '''
         if 'object' in data and 'entry' in data:
             if data['object'] == 'whatsapp_business_account':
                 for entry in data['entry']:
@@ -138,7 +167,8 @@ def whatsAppWebhook():
                     executor.submit(handleWhatsAppMessage, fromId, text)
 
         return 'success', 200
-
+        '''
+        
 
 if __name__ == "__main__":
     app.run(debug=True)
