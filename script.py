@@ -79,19 +79,16 @@ def sendWhastAppMessage(phoneNumber, message):
     headers = {'Content-Type': 'application/json',
                'Authorization': 'Bearer ' + WHATSAPP_TOKEN}
     # headers = {"Authorization": WHATSAPP_TOKEN}
-    payload = {
+    payload =  json.dumps(
+            {
                 "messaging_product": "whatsapp",
-                "recipient_type": "individual",
-                "to": phoneNumber,
+                "to": str(phoneNumber),
                 "type": "text",
-                "text": {"body": message}
-              }
-    response = requests.post(WHATSAPP_URL, headers=headers, data=payload)
-    if response.status_code == 200:
-        return 'mensaje enviado', 200
-    else:
-        return 'error al enviar mensaje', response.status_code
-    
+                "text": {"preview_url": False, "body": message}
+            }
+    )
+    requests.request("POST", url, headers=headers, data=payload)
+    print("MESSAGE SENT")    
 
 
 def makeOpenAIFunctionCall(text):
