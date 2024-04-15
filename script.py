@@ -87,7 +87,7 @@ def sendWhastAppMessage(phoneNumber, message):
                 "text": {"preview_url": False, "body": message}
             }
     )
-    requests.request("POST", url, headers=headers, data=payload)
+    requests.request("POST", WHATSAPP_URL, headers=headers, data=payload)
     print("MESSAGE SENT")    
 
 
