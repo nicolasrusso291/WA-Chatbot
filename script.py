@@ -158,7 +158,7 @@ def whatsAppWebhook():
                 message = request_data["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
                 user_phone_number = request_data["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
                 sendWhastAppMessage(user_phone_number, f"We have received: {message}")
-                # executor.submit(handleWhatsAppMessage, user_phone_number, message)
+                executor.submit(handleWhatsAppMessage, user_phone_number, message)
                 # user_message_processor(message, user_phone_number, name)
             else:
                 # checking that there is data in a flow's response object before processing it
