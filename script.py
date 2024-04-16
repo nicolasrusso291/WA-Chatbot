@@ -128,7 +128,7 @@ def whatsAppWebhook():
         challenge = request.args.get('hub.challenge')
 
         if mode == 'subscribe' and token == VERIFY_TOKEN:
-            print("GET DATA OK", file=sys.stdout)
+            print("GET DATA OK: " + challenge, file=sys.stdout)
             return challenge, 200
         else:
             return 'error', 403
@@ -146,7 +146,7 @@ def whatsAppWebhook():
                 message = request_data["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
                 user_phone_number = request_data["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
                 sendWhastAppMessage(user_phone_number, f"We have received: {message}")
-                executor.submit(handleWhatsAppMessage, user_phone_number, message)
+                # executor.submit(handleWhatsAppMessage, user_phone_number, message)
                 # user_message_processor(message, user_phone_number, name)
             else:
                 # checking that there is data in a flow's response object before processing it
@@ -168,7 +168,29 @@ def whatsAppWebhook():
 
         return 'success', 200
         '''
-        
+
+
+def flow_reply_processor(request):
+    request_data = json.loads(request.get_data())
+    name = request_data["entry"][0]["changes"][0]["value"]["contacts"][0]["profile"]["name"]
+    message = request_data["entry"][0]["changes"][0]["value"]["messages"][0]["interactive"]["nfm_reply"][
+        "response_json"]
+
+    flow_message = json.loads(message)
+    flow_key = flow_message["flow_key"]
+    if flow_key == "agentconnect":
+        firstname = flow_message["firstname"]
+        reply = f"Thank you for reaching out {firstname}. An agent will reach out to you the soonest"
+    else:
+        firstname = flow_message["firstname"]
+        secondname = flow_message["secondname"]
+        issue = flow_message["issue"]
+        reply = f"Your response has been recorded. This is what we received:\n\n*NAME*: {firstname} {secondname}\n*YOUR MESSAGE*: {issue}"
+
+    user_phone_number = request_data["entry"][0]["changes"][0]["value"]["contacts"][0][
+        "wa_id"]
+    sendWhastAppMessage(user_phone_number, reply)
+    
 
 if __name__ == "__main__":
     app.run(debug=True)
