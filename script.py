@@ -39,7 +39,7 @@ with app.app_context():
     verify_token = os.getenv("VERIFY_TOKEN")
     number_id = os.getenv("NUMBER_ID")
 
-    WHATSAPP_URL = f"https://graph.facebook.com/v18.0/{number_id}/messages"
+    WHATSAPP_URL = f"https://graph.facebook.com/v19.0/{number_id}/messages"
     
     model = "gemini-pro"
 
