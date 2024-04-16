@@ -76,15 +76,17 @@ def index():
     
 
 def sendWhastAppMessage(phoneNumber, message):
-    headers = {'Content-Type': 'application/json',
-               'Authorization': 'Bearer ' + WHATSAPP_TOKEN}
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + WHATSAPP_TOKEN,
+    }
     # headers = {"Authorization": WHATSAPP_TOKEN}
     payload =  json.dumps(
             {
                 "messaging_product": "whatsapp",
                 "to": str(phoneNumber),
                 "type": "text",
-                "text": {"preview_url": False, "body": message}
+                "text": {"preview_url": False, "body": message},
             }
     )
     req = requests.request("POST", WHATSAPP_URL, headers=headers, data=payload)
