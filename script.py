@@ -27,7 +27,7 @@ app.permanent_session_lifetime = timedelta(minutes=5)
 
 cache.init_app(app)
 
-chatbot = {}
+chat_session = {}
 
 with app.app_context():
 
@@ -65,15 +65,71 @@ def page_not_found(e):
 
 @app.route("/")
 def index():
-    # Si el usuario no tiene una sesión, se crea una nueva
-    if "user_id" not in session:
-        session["user_id"] = str(uuid4())
-
-    chatbot[session["user_id"]] = gemini.start_chat(history=contents)
-
-    # Redirigir al usuario a la página principal
-    # return redirect(url_for("whatsAppWebhook"))
     return "<h1 style='color:blue'>Quarev Whatsapp Chatbot</h1>"
+    
+
+@app.route('/webhook', methods=['GET', 'POST'])
+def whatsAppWebhook():
+    if request.method == 'GET':
+        VERIFY_TOKEN = verify_token
+        mode = request.args.get('hub.mode')
+        token = request.args.get('hub.verify_token')
+        challenge = request.args.get('hub.challenge')
+
+        if mode == 'subscribe' and token == VERIFY_TOKEN:
+            print("GET DATA OK: " + challenge, file=sys.stdout)
+            return challenge, 200
+        else:
+            return 'error', 403
+
+    if request.method == 'POST':
+        request_data = request.get_json()
+        print(request_data, file=sys.stdout)
+        if (
+            request_data["entry"][0]["changes"][0]["value"].get("messages")
+        ) is not None:
+            name = request_data["entry"][0]["changes"][0]["value"]["contacts"][0]["profile"]["name"]
+            if (
+                request_data["entry"][0]["changes"][0]["value"]["messages"][0].get("text")
+            ) is not None:
+                message = request_data["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
+                user_phone_number = request_data["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
+                global chat_session
+                if user_phone_number not in chat_session:
+                    chat_init(user_phone_number)
+                # sendWhastAppMessage(user_phone_number, f"We have received: {message}")
+                executor.submit(handleWhatsAppMessage, user_phone_number, message)
+                # user_message_processor(message, user_phone_number, name)
+            else:
+                # checking that there is data in a flow's response object before processing it
+                if (
+                    request_data["entry"][0]["changes"][0]["value"]["messages"][0]["interactive"]["nfm_reply"]["response_json"]
+                ) is not None:
+                    flow_reply_processor(request)
+
+        return make_response('success', 200)
+        
+
+def flow_reply_processor(request):
+    request_data = json.loads(request.get_data())
+    name = request_data["entry"][0]["changes"][0]["value"]["contacts"][0]["profile"]["name"]
+    message = request_data["entry"][0]["changes"][0]["value"]["messages"][0]["interactive"]["nfm_reply"][
+        "response_json"]
+
+    flow_message = json.loads(message)
+    flow_key = flow_message["flow_key"]
+    if flow_key == "agentconnect":
+        firstname = flow_message["firstname"]
+        reply = f"Thank you for reaching out {firstname}. An agent will reach out to you the soonest"
+    else:
+        firstname = flow_message["firstname"]
+        secondname = flow_message["secondname"]
+        issue = flow_message["issue"]
+        reply = f"Your response has been recorded. This is what we received:\n\n*NAME*: {firstname} {secondname}\n*YOUR MESSAGE*: {issue}"
+
+    user_phone_number = request_data["entry"][0]["changes"][0]["value"]["contacts"][0][
+        "wa_id"]
+    sendWhastAppMessage(user_phone_number, reply)
     
 
 def waid_formatter(string):
@@ -107,102 +163,25 @@ def sendWhastAppMessage(phoneNumber, message):
     print(payload, file=sys.stdout)
     print(req)
 
-def makeOpenAIFunctionCall(text):
-    """
-    system_instruction = "You are a helpful Chatbot based on WhatsApp. Include relevant emojis>"
-    messages = [{"role": "system", "content": system_instruction}]
-
-    question = {}
-    question['role'] = 'user'
-    question['content'] = text
-    messages.append(question)
-    """
+def geminiCall(text):
     try:
-        # response = openai.ChatCompletion.create(model='gpt-3.5-turbo-0613',messages=messages)
-        # return response['choices'][0]['message']['content']
-        return 'hola soy gemini'
+        global chat_session
+        response = chatbot[user_id].send_message(text)
+        return response.text
+        #return 'hola soy gemini'
     except Exception as e:
         print(e, file=sys.stdout)
         return "Sorry, Gemini server error!"
 
 
 def handleWhatsAppMessage(fromId, text):
-    answer = makeOpenAIFunctionCall(text)
+    answer = geminiCall(text)
     sendWhastAppMessage(fromId, answer)
 
 
-@app.route('/123456', methods=['GET', 'POST'])
-def whatsAppWebhook():
-    if request.method == 'GET':
-        VERIFY_TOKEN = verify_token
-        mode = request.args.get('hub.mode')
-        token = request.args.get('hub.verify_token')
-        challenge = request.args.get('hub.challenge')
-
-        if mode == 'subscribe' and token == VERIFY_TOKEN:
-            print("GET DATA OK: " + challenge, file=sys.stdout)
-            return challenge, 200
-        else:
-            return 'error', 403
-
-    if request.method == 'POST':
-        request_data = request.get_json()
-        print(request_data, file=sys.stdout)
-        if (
-            request_data["entry"][0]["changes"][0]["value"].get("messages")
-        ) is not None:
-            name = request_data["entry"][0]["changes"][0]["value"]["contacts"][0]["profile"]["name"]
-            if (
-                request_data["entry"][0]["changes"][0]["value"]["messages"][0].get("text")
-            ) is not None:
-                message = request_data["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
-                user_phone_number = request_data["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
-                sendWhastAppMessage(user_phone_number, f"We have received: {message}")
-                executor.submit(handleWhatsAppMessage, user_phone_number, message)
-                # user_message_processor(message, user_phone_number, name)
-            else:
-                # checking that there is data in a flow's response object before processing it
-                if (
-                    request_data["entry"][0]["changes"][0]["value"]["messages"][0]["interactive"]["nfm_reply"]["response_json"]
-                ) is not None:
-                    flow_reply_processor(request)
-
-        return make_response('success', 200)
-        '''
-        if 'object' in data and 'entry' in data:
-            if data['object'] == 'whatsapp_business_account':
-                for entry in data['entry']:
-                    fromId = entry['changes'][0]['value']['messages'][0]['from']
-                    msgType = entry['changes'][0]['value']['messages'][0]['type']
-                    text = entry['changes'][0]['value']['messages'][0]['text']['body']
-                    sendWhastAppMessage(fromId, f"We have received: {text}")
-                    executor.submit(handleWhatsAppMessage, fromId, text)
-
-        return 'success', 200
-        '''
-
-
-def flow_reply_processor(request):
-    request_data = json.loads(request.get_data())
-    name = request_data["entry"][0]["changes"][0]["value"]["contacts"][0]["profile"]["name"]
-    message = request_data["entry"][0]["changes"][0]["value"]["messages"][0]["interactive"]["nfm_reply"][
-        "response_json"]
-
-    flow_message = json.loads(message)
-    flow_key = flow_message["flow_key"]
-    if flow_key == "agentconnect":
-        firstname = flow_message["firstname"]
-        reply = f"Thank you for reaching out {firstname}. An agent will reach out to you the soonest"
-    else:
-        firstname = flow_message["firstname"]
-        secondname = flow_message["secondname"]
-        issue = flow_message["issue"]
-        reply = f"Your response has been recorded. This is what we received:\n\n*NAME*: {firstname} {secondname}\n*YOUR MESSAGE*: {issue}"
-
-    user_phone_number = request_data["entry"][0]["changes"][0]["value"]["contacts"][0][
-        "wa_id"]
-    sendWhastAppMessage(user_phone_number, reply)
-    
+def chat_init(wa_id):
+    global chat_session
+    chat_session[wa_id] = gemini.start_chat(history=contents)
 
 if __name__ == "__main__":
     app.run(debug=True)
