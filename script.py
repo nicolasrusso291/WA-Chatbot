@@ -75,16 +75,28 @@ def index():
     return "<h1 style='color:blue'>Quarev Whatsapp Chatbot</h1>"
     
 
+def waid_formatter(string):
+    pattern = r'(^\d\d)(9)(\d.*)'
+    subst = "\\1\\3"
+    result = re.sub(pattern, subst, string)
+    if result:
+        return result
+    else:
+        return string
+
+
 def sendWhastAppMessage(phoneNumber, message):
     headers = {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + WHATSAPP_TOKEN,
     }
     # headers = {"Authorization": WHATSAPP_TOKEN}
+    waid = str(phoneNumber)
+    waid = waid_formatter(waid)
     payload =  json.dumps(
             {
                 "messaging_product": "whatsapp",
-                "to": str(phoneNumber),
+                "to": waid,
                 "type": "text",
                 "text": {"preview_url": False, "body": message},
             }
@@ -92,8 +104,7 @@ def sendWhastAppMessage(phoneNumber, message):
     req = requests.request("POST", WHATSAPP_URL, headers=headers, data=payload)
     print(headers, file=sys.stdout)
     print(payload, file=sys.stdout)
-    print(req)    
-
+    print(req)
 
 def makeOpenAIFunctionCall(text):
     """
