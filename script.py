@@ -163,10 +163,10 @@ def sendWhastAppMessage(phoneNumber, message):
     print(payload, file=sys.stdout)
     print(req)
 
-def geminiCall(text):
+def geminiCall(phoneNumber, text):
     try:
         global chat_session
-        response = chatbot[user_id].send_message(text)
+        response = chat_session[phoneNumber].send_message(text)
         return response.text
         #return 'hola soy gemini'
     except Exception as e:
@@ -175,13 +175,13 @@ def geminiCall(text):
 
 
 def handleWhatsAppMessage(fromId, text):
-    answer = geminiCall(text)
+    answer = geminiCall(fromId, text)
     sendWhastAppMessage(fromId, answer)
 
 
-def chat_init(wa_id):
+def chat_init(phoneNumber):
     global chat_session
-    chat_session[wa_id] = gemini.start_chat(history=contents)
+    chat_session[phoneNumber] = gemini.start_chat(history=contents)
 
 if __name__ == "__main__":
     app.run(debug=True)
