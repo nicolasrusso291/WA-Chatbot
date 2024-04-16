@@ -87,10 +87,10 @@ def sendWhastAppMessage(phoneNumber, message):
                 "text": {"preview_url": False, "body": message}
             }
     )
-    requests.request("POST", WHATSAPP_URL, headers=headers, data=payload)
+    req = requests.request("POST", WHATSAPP_URL, headers=headers, data=payload)
     print(headers, file=sys.stdout)
     print(payload, file=sys.stdout)
-    print("MESSAGE SENT")    
+    print(req)    
 
 
 def makeOpenAIFunctionCall(text):
