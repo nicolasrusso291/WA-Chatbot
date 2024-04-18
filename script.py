@@ -22,15 +22,16 @@ dotenv_path = Path('./RUN.env')
 load_dotenv(dotenv_path=dotenv_path)
 
 FLASK_KEY = os.getenv('FLASK_KEY')
+
+# Session lifetime in seconds (DEFAULT = 3600)
+session_lifetime = 3600
+# Session lifetime in seconds
+watchdog_delay = 60
+
 # Configurar el secreto de la sesión
 app.secret_key = FLASK_KEY
 
-app.permanent_session_lifetime = datetime.timedelta(minutes=5)
-
-# Session lifetime in seconds (DEFAULT = 3600)
-session_lifetime = 60
-# Session lifetime in seconds
-watchdog_delay = 60
+app.permanent_session_lifetime = datetime.timedelta(minutes=session_lifetime/60)
 
 cache.init_app(app)
 
