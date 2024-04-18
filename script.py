@@ -25,15 +25,37 @@ app.secret_key = FLASK_KEY
 
 app.permanent_session_lifetime = timedelta(minutes=5)
 
+# Session lifetime in seconds (DEFAULT = 3600)
+session_lifetime = 60
+# Session lifetime in seconds
+watchdog_delay = 60
+
 cache.init_app(app)
 
 chat_session = {}
+
+def session_watchdog():
+  while True:
+    global chat_session
+    print(f"Sesiones activas: {chat_session}")
+
+    end_session()
+    time.sleep(watchdog_delay)
+
+def end_session():
+  global chat_session
+  current_time = time.time()
+  for key, element in chat_session.items():
+    element_time = element[1]
+    delta_time = current_time - element_time
+    if delta_time > session_lifetime:  # 1 hora en segundos
+      del chat_session[key]
+      print(f"Sesión eliminada: {element}")
 
 with app.app_context():
 
     # Google Gemini creds
     API_KEY = os.getenv('GOOGLE_API_KEY')
-    # CREDENTIALS = service_account.Credentials. from_service_account_file('google_key.json')
 
     # Whatsapp creds
     WHATSAPP_TOKEN = os.getenv("WA_TOKEN")
@@ -56,6 +78,10 @@ with app.app_context():
     # Create client
     genai.configure(api_key=API_KEY)
     gemini = genai.GenerativeModel(model_name=model, generation_config=generation_config, safety_settings=safety_settings)
+
+    # Puedes ajustar el tiempo de espera (3600 segundos) según tus necesidades
+    session_thread = Thread(target=session_watchdog)
+    session_thread.start()
 
 
 @app.errorhandler(404)
@@ -166,9 +192,8 @@ def sendWhastAppMessage(phoneNumber, message):
 def geminiCall(phoneNumber, text):
     try:
         global chat_session
-        response = chat_session[phoneNumber].send_message(text)
+        response = chat_session[phoneNumber][0].send_message(text)
         return response.text
-        #return 'hola soy gemini'
     except Exception as e:
         print(e, file=sys.stdout)
         return "Sorry, Gemini server error!"
@@ -181,7 +206,8 @@ def handleWhatsAppMessage(fromId, text):
 
 def chat_init(phoneNumber):
     global chat_session
-    chat_session[phoneNumber] = gemini.start_chat(history=contents)
+    new_value = [gemini.start_chat(history=contents), time.time()]
+    chat_session[phoneNumber] = new_value
 
 if __name__ == "__main__":
     app.run(debug=True)
