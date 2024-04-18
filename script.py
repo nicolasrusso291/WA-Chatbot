@@ -45,6 +45,21 @@ def session_watchdog():
     time.sleep(watchdog_delay)
 
 def end_session():
+    global chat_session
+    current_time = time.time()
+    # Create a list of keys to iterate over
+    keys_to_check = list(chat_session.keys())
+    for key in keys_to_check:
+        element = chat_session.get(key)  # Use get to avoid KeyError if key was already deleted
+        if element:
+            element_time = element[1]
+            delta_time = current_time - element_time
+            if delta_time > session_lifetime:  # 1 hora en segundos
+                del chat_session[key]
+                print(f"Sesión eliminada: {element}")
+              
+'''
+def end_session():
   global chat_session
   current_time = time.time()
   for key, element in chat_session.items():
@@ -53,6 +68,7 @@ def end_session():
     if delta_time > session_lifetime:  # 1 hora en segundos
       del chat_session[key]
       print(f"Sesión eliminada: {element}")
+'''
 
 with app.app_context():
 
