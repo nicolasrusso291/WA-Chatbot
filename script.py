@@ -5,8 +5,10 @@ import sys
 import json
 import requests
 import re
+import time
+import datetime
+from threading import Thread
 from uuid import uuid4
-from datetime import timedelta
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from dotenv import load_dotenv
@@ -23,7 +25,7 @@ FLASK_KEY = os.getenv('FLASK_KEY')
 # Configurar el secreto de la sesión
 app.secret_key = FLASK_KEY
 
-app.permanent_session_lifetime = timedelta(minutes=5)
+app.permanent_session_lifetime = datetime.timedelta(minutes=5)
 
 # Session lifetime in seconds (DEFAULT = 3600)
 session_lifetime = 60
